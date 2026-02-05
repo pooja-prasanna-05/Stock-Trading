@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Virtual Trader - Home{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>📈 Virtual Stock Trading Platform</h1>
+    <p>Practice stock trading safely with virtual currency. Learn market dynamics without financial risk.</p>
+    
+    <div class="features">
+        <div class="feature-item">
+            <h3>💰 Virtual Currency</h3>
+            <p>Start with $100,000 virtual dollars</p>
+        </div>
+        <div class="feature-item">
+            <h3>📊 Real-time Prices</h3>
+            <p>Simulated stock prices that update dynamically</p>
+        </div>
+        <div class="feature-item">
+            <h3>📈 Portfolio Tracking</h3>
+            <p>Monitor your holdings and P/L in real-time</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 2rem;">
+        <a href="{{ url_for('signup') }}" class="btn btn-primary" style="text-decoration: none; display: inline-block; margin-right: 1rem;">
+            Get Started
+        </a>
+        <a href="{{ url_for('login') }}" class="btn" style="text-decoration: none; display: inline-block;">
+            I already have an account
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h2>Admin Dashboard</h2>
+<div style="margin-bottom: 1rem;">
+    <a href="{{ url_for('admin_logout') }}" class="btn">Logout as Admin</a>
+</div>
+
+<div class="card" style="margin-bottom: 1rem;">
+    <h3>All Users ({{ users|length }})</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Email</th>
+                <th>Cash Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if users %}
+                {% for u in users %}
+                <tr>
+                    <td style="font-size: 0.8rem;">{{ u.user_id[:8] }}...</td>
+                    <td>{{ u.email }}</td>
+                    <td>${{ "%.2f"|format(u.cash_balance) }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="3" style="text-align: center;">No users yet</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>All Trades ({{ trades|length }})</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>User ID</th>
+                <th>Side</th>
+                <th>Symbol</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if trades %}
+                {% for t in trades[:50] %}
+                <tr>
+                    <td>{{ t.timestamp[:19] }}</td>
+                    <td style="font-size: 0.8rem;">{{ t.user_id[:8] }}...</td>
+                    <td><span class="badge {{ t.side.lower() }}">{{ t.side }}</span></td>
+                    <td><strong>{{ t.symbol }}</strong></td>
+                    <td>{{ t.quantity }}</td>
+                    <td>${{ "%.2f"|format(t.price) }}</td>
+                    <td>${{ "%.2f"|format(t.amount) }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center;">No trades yet</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    {% if trades|length > 50 %}
+    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">Showing first 50 trades</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Virtual Trader{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 420px; margin: 2rem auto;">
+    <h2>Login</h2>
+    <form method="post">
+        <label>Email</label>
+        <input type="email" name="email" required autocomplete="email">
+        
+        <label>Password</label>
+        <input type="password" name="password" required autocomplete="current-password">
+        
+        <button class="btn btn-primary" type="submit" style="margin-top: 0.5rem; width: 100%;">
+            Login
+        </button>
+    </form>
+    <p style="margin-top: 1rem; text-align: center; font-size: 0.9rem;">
+        New here? <a href="{{ url_for('signup') }}">Create an account</a>
+    </p>
+</div>
+{% endblock %}

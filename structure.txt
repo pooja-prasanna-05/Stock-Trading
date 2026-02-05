@@ -1,0 +1,23 @@
+virtual-stock-trader/
+│
+├── app.py
+├── config.py
+├── requirements.txt
+│
+├── services/
+│   ├── stock_service.py
+│   └── trade_service.py
+│
+├── data/
+│   └── local_db.py
+│
+├── notifications/
+│   └── local_notifier.py
+│
+├── templates/
+│   ├── login.html
+│   └── dashboard.html
+│
+└── static/
+    ├── style.css
+    └── app.js

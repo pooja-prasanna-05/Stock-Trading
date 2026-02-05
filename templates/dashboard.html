@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Virtual Trader{% endblock %}
+
+{% block content %}
+<h2>Welcome, {{ user.email }}</h2>
+<div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 1rem;">
+    <h3 style="margin-top: 0;">Cash Balance</h3>
+    <p style="font-size: 2rem; font-weight: bold; margin: 0.5rem 0;">${{ "%.2f"|format(user.cash_balance) }}</p>
+</div>
+
+<div class="grid grid-3">
+    <div class="card">
+        <h3>Search Stocks</h3>
+        <input id="stockQuery" placeholder="Symbol or name (e.g. AAPL)" />
+        <button class="btn btn-primary" id="searchBtn" style="width: 100%; margin-top: 0.5rem;">Search</button>
+        <table style="margin-top: 1rem;">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody id="stocksTableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>Place Order</h3>
+        <label>Symbol</label>
+        <input id="orderSymbol" placeholder="AAPL" />
+        
+        <label>Side</label>
+        <select id="orderSide">
+            <option value="BUY">BUY</option>
+            <option value="SELL">SELL</option>
+        </select>
+        
+        <label>Quantity</label>
+        <input id="orderQuantity" type="number" min="1" />
+        
+        <button class="btn btn-primary" id="orderSubmit" style="width: 100%; margin-top: 0.5rem;">
+            Submit Order
+        </button>
+
+        <div class="status-text" id="status" style="color: #007b00;"></div>
+        <div class="status-text" id="error" style="color: #b00020;"></div>
+
+        <h4 style="margin-top: 1.5rem;">Recent Trades</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Side</th>
+                    <th>Symbol</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody id="tradesTableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>Portfolio</h3>
+        <button class="btn" id="portfolioRefresh" style="width: 100%;">Refresh</button>
+        <table style="margin-top: 1rem;">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Qty</th>
+                    <th>Avg Buy</th>
+                    <th>Price</th>
+                    <th>Value</th>
+                    <th>P/L</th>
+                </tr>
+            </thead>
+            <tbody id="portfolioTableBody"></tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const stocksTbody = document.getElementById("stocksTableBody");
+    const tradesTbody = document.getElementById("tradesTableBody");
+    const portfolioTbody = document.getElementById("portfolioTableBody");
+    const statusEl = document.getElementById("status");
+    const errorEl = document.getElementById("error");
+
+    function setStatus(msg) {
+        statusEl.textContent = msg || "";
+        errorEl.textContent = "";
+    }
+    function setError(msg) {
+        errorEl.textContent = msg || "";
+        statusEl.textContent = "";
+    }
+
+    async function fetchJSON(url, options = {}) {
+        try {
+            const res = await fetch(url, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Request failed");
+            return data;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async function searchStocks() {
+        setStatus("Searching...");
+        const q = document.getElementById("stockQuery").value;
+        try {
+            const data = await fetchJSON(`/api/stocks?q=${encodeURIComponent(q)}`);
+            stocksTbody.innerHTML = "";
+            data.forEach((s) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td><strong>${s.symbol}</strong></td><td>${s.companyName}</td><td>$${s.price.toFixed(2)}</td>`;
+                tr.style.cursor = "pointer";
+                tr.onclick = () => {
+                    document.getElementById("orderSymbol").value = s.symbol;
+                };
+                stocksTbody.appendChild(tr);
+            });
+            setStatus("Stocks loaded.");
+        } catch (err) {
+            setError(err.message);
+        }
+    }
+
+    async function placeOrder() {
+        setStatus("Placing order...");
+        const symbol = document.getElementById("orderSymbol").value;
+        const side = document.getElementById("orderSide").value;
+        const quantity = Number(document.getElementById("orderQuantity").value || 0);
+        
+        if (!symbol || quantity <= 0) {
+            setError("Please enter symbol and quantity");
+            return;
+        }
+
+        try {
+            const data = await fetchJSON("/api/orders", {
+                method: "POST",
+                body: JSON.stringify({ symbol, side, quantity }),
+            });
+            setStatus(data.message);
+            document.getElementById("orderQuantity").value = "";
+            await loadPortfolio();
+            await loadTrades();
+            // Refresh cash balance display
+            location.reload();
+        } catch (err) {
+            setError(err.message);
+        }
+    }
+
+    async function loadPortfolio() {
+        try {
+            const data = await fetchJSON("/api/portfolio");
+            portfolioTbody.innerHTML = "";
+            if (data.holdings.length === 0) {
+                portfolioTbody.innerHTML = "<tr><td colspan='6' style='text-align: center;'>No holdings</td></tr>";
+            } else {
+                data.holdings.forEach((h) => {
+                    const tr = document.createElement("tr");
+                    const plClass = h.unrealized_pl >= 0 ? "positive" : "negative";
+                    tr.innerHTML = `
+                        <td><strong>${h.symbol}</strong></td>
+                        <td>${h.quantity}</td>
+                        <td>$${h.avg_buy_price.toFixed(2)}</td>
+                        <td>$${h.current_price.toFixed(2)}</td>
+                        <td>$${h.market_value.toFixed(2)}</td>
+                        <td class="${plClass}">$${h.unrealized_pl.toFixed(2)}</td>
+                    `;
+                    portfolioTbody.appendChild(tr);
+                });
+            }
+        } catch (err) {
+            console.error("Portfolio load error:", err);
+        }
+    }
+
+    async function loadTrades() {
+        try {
+            const data = await fetchJSON("/api/trades");
+            tradesTbody.innerHTML = "";
+            if (data.length === 0) {
+                tradesTbody.innerHTML = "<tr><td colspan='5' style='text-align: center;'>No trades yet</td></tr>";
+            } else {
+                data.slice(0, 10).forEach((t) => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${new Date(t.timestamp).toLocaleTimeString()}</td>
+                        <td><span class="badge ${t.side.toLowerCase()}">${t.side}</span></td>
+                        <td><strong>${t.symbol}</strong></td>
+                        <td>${t.quantity}</td>
+                        <td>$${t.price.toFixed(2)}</td>
+                    `;
+                    tradesTbody.appendChild(tr);
+                });
+            }
+        } catch (err) {
+            console.error("Trades load error:", err);
+        }
+    }
+
+    document.getElementById("searchBtn").addEventListener("click", searchStocks);
+    document.getElementById("orderSubmit").addEventListener("click", placeOrder);
+    document.getElementById("portfolioRefresh").addEventListener("click", loadPortfolio);
+    document.getElementById("stockQuery").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") searchStocks();
+    });
+
+    // Initial load
+    searchStocks();
+    loadPortfolio();
+    loadTrades();
+
+    // Auto-refresh every 10 seconds
+    setInterval(() => {
+        loadPortfolio();
+        loadTrades();
+    }, 10000);
+</script>
+{% endblock %}
