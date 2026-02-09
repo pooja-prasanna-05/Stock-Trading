@@ -91,7 +91,7 @@ class AwsClient:
         )
         
         # SNS topic ARN
-        self._trade_topic_arn = os.getenv("SNS_TRADE_TOPIC_ARN", "arn:aws:sns:us-east-1:390403856663:Stock_trading")
+        self._trade_topic_arn = os.getenv("SNS_TRADE_TOPIC_ARN", "arn:aws:sns:us-east-1:867344463358:Stock")
 
     # ---------- Users ----------
 
