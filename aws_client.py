@@ -71,7 +71,7 @@ class AwsClient:
 
     def _init_aws_clients(self) -> None:
         """Initialize AWS clients for DynamoDB and SNS."""
-        region = os.getenv("AWS_REGION", "ap-south-1")
+        region = os.getenv("AWS_REGION", "us-east-1")
         
         # DynamoDB resource
         self._dynamodb = boto3.resource("dynamodb", region_name=region)
@@ -91,7 +91,7 @@ class AwsClient:
         )
         
         # SNS topic ARN
-        self._trade_topic_arn = os.getenv("SNS_TRADE_TOPIC_ARN", "arn:aws:sns:us-east-1:867344463358:Stock")
+        self._trade_topic_arn = os.getenv("SNS_TRADE_TOPIC_ARN", "arn:aws:sns:us-east-1:699475957834:Stock_Trading")
 
     # ---------- Users ----------
 
