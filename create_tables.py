@@ -3,7 +3,7 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 
-REGION = os.getenv("AWS_REGION", "ap-south-1")
+REGION = os.getenv("AWS_REGION", "us-east-1")
 
 dynamodb = boto3.client("dynamodb", region_name=REGION)
 
